@@ -1,9 +1,5 @@
 # Bottleneck Link Locator in Access networks
 
-![Goal](assets/goal.png)
-
-![Implementation](assets/implementation.png)
-
 ## Prerequisites
 
 - Linux (*Windows and MacOS are untested*)
