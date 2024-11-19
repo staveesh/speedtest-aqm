@@ -21,7 +21,7 @@ on:
       - .github/workflows/ci.yml
 
 env:
-  APP_NAME: bottleneck-finder
+  APP_NAME: traceneck
   BIN_TAR: bin.tgz
   REGISTRY: ghcr.io
 
