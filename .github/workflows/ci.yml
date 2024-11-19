@@ -1,0 +1,169 @@
+name: Build & Release
+
+on:
+  push:
+    paths:
+      - internal/**
+      - cmd/**
+      - go.*
+      - Makefile
+      - Dockerfile
+      - .dockerignore
+      - .github/workflows/ci.yml
+  pull_request:
+    paths:
+      - internal/**
+      - cmd/**
+      - go.*
+      - Makefile
+      - Dockerfile
+      - .dockerignore
+      - .github/workflows/ci.yml
+
+env:
+  APP_NAME: bottleneck-finder
+  BIN_TAR: bin.tgz
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build binaries
+        run: |
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            docker build --target bin --build-arg VERSION=${GITHUB_REF_NAME} -t ${APP_NAME}:bin .
+          else
+            docker build --target bin -t ${APP_NAME}:bin .
+          fi
+
+          docker run -d --name ${APP_NAME}-bin ${APP_NAME}:bin sleep 5
+          docker cp ${APP_NAME}-bin:/bf/${BIN_TAR} .
+          docker rm -f ${APP_NAME}-bin
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary
+          path: ${{ env.BIN_TAR }}
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Downloads binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: binary
+
+      - name: Set BASE_NAME
+        run: |
+          echo "BASE_NAME=${APP_NAME}_${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+      - name: Package binaries
+        run: |
+          tar xvzf ${BIN_TAR} && rm ${BIN_TAR}
+          for arch in amd64 arm64; do
+            tar xvzf ${arch}.tgz &&
+            tar cvzf ${BASE_NAME}_${arch}.tar.gz -C bin ${APP_NAME} &&
+            tar cvzf ${BASE_NAME}_netrics_${arch}.tar.gz -C bin netrics-${APP_NAME} &&
+            rm -rf ${arch}.tgz bin
+          done
+
+      - name: Generate checksums
+        run: |
+          CHECKSUM_FILE=${BASE_NAME}_checksums.txt
+          for file in *.tar.gz; do
+            sha256sum $file >> $CHECKSUM_FILE
+          done
+
+      - name: Release binaries
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: ${{ env.BASE_NAME }}*
+          file_glob: true
+
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: Dockerfile
+          sparse-checkout-cone-mode: false
+
+      - name: Downloads binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: binary
+
+      - name: Set version tags
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "MAJOR=$(echo $VERSION | cut -d. -f1)" >> $GITHUB_ENV
+          echo "MINOR=$(echo $VERSION | cut -d. -f1-2)" >> $GITHUB_ENV
+          echo "PATCH=$(echo $VERSION | cut -d. -f1-3)" >> $GITHUB_ENV
+
+      - name: Build netrics image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: buildx
+          platforms: linux/amd64,linux/arm64
+          build-arg: NETRICS=true
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}:netrics
+            ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.MAJOR }}-netrics
+            ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.MINOR }}-netrics
+            ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.PATCH }}-netrics
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: buildx
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}:latest
+            ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.MAJOR }}
+            ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.MINOR }}
+            ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.PATCH }}
