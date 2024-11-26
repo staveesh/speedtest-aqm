@@ -8,7 +8,7 @@ import (
 	"github.com/internet-equity/traceneck/internal/channel"
 	"github.com/internet-equity/traceneck/internal/config"
 	"github.com/internet-equity/traceneck/internal/meta"
-	"github.com/internet-equity/traceneck/internal/util"
+	timeUtil "github.com/internet-equity/traceneck/internal/util/time"
 )
 
 var logParserDone = make(channel.Type)
@@ -34,7 +34,7 @@ func SpeedtestProcess() {
 	}
 	cmd.Stdout = logOut
 
-	meta.MMeta.SpeedtestStartTime = util.GetTime()
+	meta.MMeta.SpeedtestStartTime = timeUtil.GetTime()
 	if err := cmd.Start(); err != nil {
 		log.Println("[speedtest] client error:", err)
 		return
@@ -48,7 +48,7 @@ func SpeedtestProcess() {
 		log.Println("[speedtest] client error:", err)
 		return
 	}
-	meta.MMeta.SpeedtestEndTime = util.GetTime()
+	meta.MMeta.SpeedtestEndTime = timeUtil.GetTime()
 	log.Println("[speedtest] complete")
 
 	<-logParserDone

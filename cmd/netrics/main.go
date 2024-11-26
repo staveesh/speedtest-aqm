@@ -1,11 +1,9 @@
 package main
 
 import (
-	"io"
-	"log"
+	"os"
 	"time"
 
-	"github.com/spf13/pflag"
 	"github.com/internet-equity/traceneck/internal/archive"
 	"github.com/internet-equity/traceneck/internal/channel"
 	"github.com/internet-equity/traceneck/internal/config"
@@ -16,14 +14,11 @@ import (
 
 func main() {
 	// Define args
+	config.OutPath = "-" // default to stdout archive
 	config.Define()
-	pflag.CommandLine.MarkHidden("archive")
 
 	// Parse args
 	config.Parse()
-
-	// Disable logs
-	log.SetOutput(io.Discard)
 
 	// Init metadata
 	meta.Init()
@@ -54,6 +49,9 @@ func main() {
 	// Write metadata
 	meta.Write()
 
-	// Create tar
-	archive.CreateArchive()
+	// Write archive
+	if config.ShouldArchive() {
+		archive.Write()
+		os.RemoveAll(config.WorkDir)
+	}
 }

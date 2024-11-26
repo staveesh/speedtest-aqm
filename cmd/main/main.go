@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"time"
 
 	"github.com/internet-equity/traceneck/internal/archive"
@@ -47,8 +48,9 @@ func main() {
 	// Write metadata
 	meta.Write()
 
-	// Create tar
-	if config.Archive {
-		archive.CreateArchive()
+	// Write archive
+	if config.ShouldArchive() {
+		archive.Write()
+		os.RemoveAll(config.WorkDir)
 	}
 }

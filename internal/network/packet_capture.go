@@ -14,7 +14,6 @@ import (
 
 	"github.com/internet-equity/traceneck/internal/channel"
 	"github.com/internet-equity/traceneck/internal/config"
-	"github.com/internet-equity/traceneck/internal/util"
 )
 
 // Ethernet Header: 14 bytes
@@ -44,7 +43,7 @@ func CaptureProcess() {
 		captureFilter += " or (udp and outbound) or ((icmp or icmp6) and inbound)"
 	}
 
-	CapFile = util.GetFilePath(config.OutDir, "capture.pcap", config.Timestamp)
+	CapFile = config.GetFilePath("capture.pcap")
 	capWriter, err := os.Create(CapFile)
 	if err != nil {
 		log.Println("[pcap] error opening pcap file:", err)

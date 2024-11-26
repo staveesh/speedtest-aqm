@@ -7,9 +7,35 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/google/gopacket/pcap"
+
+	osUtil "github.com/internet-equity/traceneck/internal/util/os"
+	"github.com/internet-equity/traceneck/internal/util/term"
 )
+
+// dedicated logger for failures -- which won't be disabled if we're in quiet mode
+var flog = log.New(os.Stderr, "", log.LstdFlags)
+
+func checkNakedOutPath() error {
+	if Force || OutPath == "-" || osUtil.PathDirectoryLike(OutPath) || filepath.Ext(OutPath) != "" || !term.IsTerm() {
+		return nil
+	}
+	core := errors.New("archive destination is ambiguous")
+	return fmt.Errorf("%w without extension (e.g. \".tar\", \".tgz\", \".tar.gz\") "+
+		"[or specify trailing slash to write outputs to directory]",
+		core)
+}
+
+func checkTerminalOutput() error {
+	// if we're going to write to stdout,
+	// check that it's not the terminal
+	if !Force && OutPath == "-" && term.IsTerm() {
+		return errors.New("archive destination is character device (terminal)")
+	}
+	return nil
+}
 
 func checkInterface() error {
 	iface, err := net.InterfaceByName(Interface)
@@ -76,20 +102,45 @@ func checkDirectHop() error {
 	return nil
 }
 
-func checkDataDir() error {
-	if fd, err := os.Stat(OutDir); err != nil {
-		if err := os.MkdirAll(OutDir, 0755); err != nil {
-			return errors.New("could not create directory: " + err.Error())
+// OutPath: if not directory-like, not stdout, ensure can open it for writing
+func checkOutPath() error {
+	if OutPath != "-" && !osUtil.PathDirectoryLike(OutPath) {
+		outDir := filepath.Dir(OutPath)
+
+		if err := osUtil.DirAvail(outDir); err != nil {
+			return err
 		}
-	} else if !fd.IsDir() {
-		return errors.New("not a directory")
+
+		outFile, err := os.Create(OutPath)
+		if err != nil {
+			return errors.New("could not open for writing: " + err.Error())
+		}
+		defer outFile.Close()
 	}
 
-	if tmpFile, err := os.CreateTemp(OutDir, ".write"); err != nil {
-		return errors.New("requires write access")
+	return nil
+}
+
+// WorkDir: establish dir path and ensure writeable
+func checkWorkDir() error {
+	if osUtil.PathDirectoryLike(OutPath) {
+		// working directory can be output directory
+		WorkDir = OutPath
 	} else {
-		tmpFile.Close()
-		os.Remove(tmpFile.Name())
+		// write to temporary directory before writing archive to path
+		var err error
+		WorkDir, err = os.MkdirTemp("", "traceneck-")
+		if err != nil {
+			return errors.New("could not create temporary directory")
+		}
+	}
+
+	if err := osUtil.DirAvail(WorkDir); err != nil {
+		return err
+	}
+
+	if err := osUtil.DirWriteable(WorkDir); err != nil {
+		return errors.New("requires write access")
 	}
 
 	return nil
@@ -104,23 +155,35 @@ func checkTshark() error {
 }
 
 func verifyFlags() {
+	if err := checkTerminalOutput(); err != nil {
+		term.Confirm(err.Error())
+	}
+
+	if err := checkNakedOutPath(); err != nil {
+		if core := errors.Unwrap(err); core != nil {
+			fmt.Println(err.Error())
+			err = core
+		}
+		term.Confirm(err.Error())
+	}
+
 	if err := checkInterface(); err != nil {
-		log.Println("[config] interface:", Interface, err)
-		os.Exit(1)
+		// log and exit(1)
+		flog.Fatalln("[config] interface:", Interface, err)
 	} else {
 		log.Println("[config] interface:", Interface)
 	}
 
 	if err := checkTool(); err != nil {
-		log.Println("[config] tool:", Tool, err)
-		os.Exit(1)
+		// log and exit(1)
+		flog.Fatalln("[config] tool:", Tool, err)
 	} else {
 		log.Println("[config] tool:", Tool)
 	}
 
 	if err := checkPingType(); err != nil {
-		log.Println("[config] ping type:", PingType, err)
-		os.Exit(1)
+		// log and exit(1)
+		flog.Fatalln("[config] ping type:", PingType, err)
 	} else {
 		log.Println("[config] ping type:", PingType)
 	}
@@ -128,23 +191,30 @@ func verifyFlags() {
 	log.Println("[config] max ttl:", MaxTTL)
 
 	if err := checkDirectHop(); err != nil {
-		log.Println("[config] direct hop:", DirectHop, err)
-		os.Exit(1)
+		// log and exit(1)
+		flog.Fatalln("[config] direct hop:", DirectHop, err)
 	} else {
 		log.Println("[config] direct hop:", DirectHop)
 	}
 
-	if err := checkDataDir(); err != nil {
-		log.Println("[config] output dir:", OutDir, err)
-		os.Exit(1)
+	if err := checkOutPath(); err != nil {
+		// log and exit(1)
+		flog.Fatalln("[config] output path:", err)
 	} else {
-		log.Println("[config] output dir:", OutDir)
+		log.Println("[config] output path:", OutPath)
+	}
+
+	if err := checkWorkDir(); err != nil {
+		// log and exit(1)
+		flog.Fatalln("[config] working dir:", err)
+	} else {
+		log.Println("[config] working dir:", WorkDir)
 	}
 
 	if TShark {
 		if err := checkTshark(); err != nil {
-			log.Println("[config] tshark:", TShark, err)
-			os.Exit(1)
+			// log and exit(1)
+			flog.Fatalln("[config] tshark:", TShark, err)
 		} else {
 			log.Println("[config] tshark:", TShark)
 		}

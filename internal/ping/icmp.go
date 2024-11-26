@@ -13,7 +13,7 @@ import (
 	"github.com/internet-equity/traceneck/internal/channel"
 	"github.com/internet-equity/traceneck/internal/config"
 	"github.com/internet-equity/traceneck/internal/meta"
-	"github.com/internet-equity/traceneck/internal/util"
+	timeUtil "github.com/internet-equity/traceneck/internal/util/time"
 )
 
 var ID = os.Getpid() & 0xffff
@@ -35,8 +35,8 @@ func handleEchoReply(replyIP net.IP, recvTime time.Time, msg *icmp.Message) {
 		TTL:       getTTL(i),
 		Round:     round + 1,
 		ReplyIP:   replyIP,
-		SendTime:  util.GetTime(reqTime),
-		RecvTime:  util.GetTime(recvTime),
+		SendTime:  timeUtil.UnixPrecise(reqTime),
+		RecvTime:  timeUtil.UnixPrecise(recvTime),
 		RTT:       rtt,
 		IcmpSeqNo: pktNo,
 	}
@@ -123,7 +123,7 @@ func lostLoggerICMP(i int) (total, dropped int) {
 			meta.MSamples[pktNo] = meta.RttSample{
 				TTL:       ttl,
 				Round:     r + 1,
-				SendTime:  util.GetTime(reqTime),
+				SendTime:  timeUtil.UnixPrecise(reqTime),
 				IcmpSeqNo: pktNo,
 			}
 

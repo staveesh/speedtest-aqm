@@ -5,13 +5,14 @@ import (
 	"net"
 	"time"
 
-	"github.com/internet-equity/traceneck/internal/channel"
-	"github.com/internet-equity/traceneck/internal/config"
-	"github.com/internet-equity/traceneck/internal/meta"
-	"github.com/internet-equity/traceneck/internal/util"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
+
+	"github.com/internet-equity/traceneck/internal/channel"
+	"github.com/internet-equity/traceneck/internal/config"
+	"github.com/internet-equity/traceneck/internal/meta"
+	timeUtil "github.com/internet-equity/traceneck/internal/util/time"
 )
 
 const (
@@ -97,7 +98,7 @@ func PingProcess() {
 	}
 
 	log.Println("[ping] started")
-	meta.MMeta.PingStartTime = util.GetTime()
+	meta.MMeta.PingStartTime = timeUtil.GetTime()
 
 	go listener()
 
@@ -120,7 +121,7 @@ func PingProcess() {
 	close(stopListener)
 	<-listenerDone
 
-	meta.MMeta.PingEndTime = util.GetTime()
+	meta.MMeta.PingEndTime = timeUtil.GetTime()
 	log.Println("[ping] stopped")
 
 	var (

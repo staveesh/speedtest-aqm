@@ -13,7 +13,7 @@ import (
 	"github.com/internet-equity/traceneck/internal/channel"
 	"github.com/internet-equity/traceneck/internal/config"
 	"github.com/internet-equity/traceneck/internal/meta"
-	"github.com/internet-equity/traceneck/internal/util"
+	timeUtil "github.com/internet-equity/traceneck/internal/util/time"
 )
 
 const startingPort = 1024
@@ -45,8 +45,8 @@ func handleTimeExceededUDP(replyIP net.IP, recvTime time.Time, msg *icmp.Message
 		TTL:         getTTL(i),
 		Round:       round + 1,
 		ReplyIP:     replyIP,
-		SendTime:    util.GetTime(reqTime),
-		RecvTime:    util.GetTime(recvTime),
+		SendTime:    timeUtil.UnixPrecise(reqTime),
+		RecvTime:    timeUtil.UnixPrecise(recvTime),
 		RTT:         rtt,
 		UdpDestPort: dstPort,
 	}
@@ -103,7 +103,7 @@ func lostLoggerUDP(i int) (total, dropped int) {
 			meta.MSamples[pktNo] = meta.RttSample{
 				TTL:         ttl,
 				Round:       r + 1,
-				SendTime:    util.GetTime(reqTime),
+				SendTime:    timeUtil.UnixPrecise(reqTime),
 				UdpDestPort: startingPort + pktNo,
 			}
 
