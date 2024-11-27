@@ -1,4 +1,6 @@
-# Bottleneck Link Locator in Access networks
+# Traceneck
+
+Bottleneck Link Locator in Access networks
 
 ## Prerequisites
 
@@ -12,36 +14,23 @@
 
 ## Build from Source
 
-Install [go](https://go.dev/dl/), [make](https://www.gnu.org/software/make/) (recommended) and run
+Install [go](https://go.dev/dl/), [make](https://www.gnu.org/software/make/) (recommended) and run:
 
 ```sh
-make build # OR make release
-make setcap
+make build setcap
+
+# OR release:
+# make release setcap
+
 ./bin/traceneck
 ```
 
-OR use [docker](https://docs.docker.com/engine/install/)
+OR use [Docker](https://docs.docker.com/engine/install/):
 
 ```sh
 make docker
+
 docker run --rm -v ./data:/data traceneck:latest
-```
-
-## Build for Netrics
-
-```sh
-export NETRICS=true
-make build # OR make release
-make setcap
-./bin/netrics-traceneck
-```
-
-OR use [docker](https://docs.docker.com/engine/install/)
-
-```sh
-export NETRICS=true
-make docker
-docker run --rm traceneck:netrics
 ```
 
 ## Options
