@@ -6,7 +6,7 @@ import (
 	"regexp"
 )
 
-func Confirm(prompt string) {
+func Confirm(prompt string) bool {
 	for {
 		response := ""
 
@@ -14,11 +14,11 @@ func Confirm(prompt string) {
 		fmt.Scanln(&response)
 
 		if confirmation, _ := regexp.MatchString(`^[yY]$`, response); confirmation {
-			break
+			return true
 		}
 
 		if rejection, _ := regexp.MatchString(`^[nN]?$`, response); rejection {
-			os.Exit(1)
+			return false
 		}
 	}
 }

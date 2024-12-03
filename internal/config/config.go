@@ -16,20 +16,27 @@ import (
 )
 
 var (
+	// config flags
+	//
+	// defaults *may* be specified here (and to be modifiable prior to invocation of Define)
 	Interface string           // interface
 	Tool      string           // ndt or ookla
 	PingType  string           // icmp or udp
 	MaxTTL    int              // maximum TTL until which to send pings
 	DirectHop int              // hop to ping directly by icmp echo
-	WorkDir   string           // working directory (internal)
-	OutPath   string = "data/" // out path/directory (may be directory, file or -)
+	OutPath   string = "data/" // out path/directory (may be directory/, file or -)
 	TShark    bool             // use tshark
 	IdleTime  int              // idle time in seconds
 	Force     bool             // whether to confirm
 	Quiet     bool             // silence logging
 
+	// other flags
 	help    bool
 	version bool
+
+	// internal config
+	WorkDir     string
+	TempWorkDir string
 
 	Timestamp   time.Time
 	InterfaceIP []net.IP
@@ -56,7 +63,7 @@ func Define() {
 	pflag.CommandLine.SortFlags = false
 }
 
-func Parse() {
+func Parse() error {
 	pflag.Parse()
 
 	if help {
@@ -75,10 +82,15 @@ func Parse() {
 		log.SetOutput(io.Discard)
 	}
 
-	verifyFlags()
+	err := finish()
+	if err != nil {
+		return err
+	}
 
 	Timestamp = time.Now()
 	log.Printf("[config] timestamp: %.9f", timeUtil.UnixPrecise(Timestamp))
+
+	return nil
 }
 
 func ShouldArchive() bool {
@@ -107,4 +119,10 @@ func GetFilePath(fileName string) string {
 	}
 
 	return filepath.Join(WorkDir, fileFinal)
+}
+
+func Teardown() {
+	if TempWorkDir != "" {
+		os.RemoveAll(TempWorkDir)
+	}
 }

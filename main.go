@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"time"
 
@@ -12,12 +13,29 @@ import (
 	"github.com/internet-equity/traceneck/internal/ping"
 )
 
+// flog: dedicated logger for failures -- which won't disable in quiet mode
+var flog = log.New(os.Stderr, "", log.LstdFlags)
+
 func main() {
 	// Define args
 	config.Define()
 
 	// Parse args
-	config.Parse()
+	err := config.Parse()
+
+	// Ensure final teardown
+	defer config.Teardown()
+
+	// Handle parse error
+	if err != nil {
+		if errM := err.Error(); errM != "" {
+			// log and exit(1)
+			flog.Fatalln(errM)
+		} else {
+			// just exit(1)
+			os.Exit(1)
+		}
+	}
 
 	// Init metadata
 	meta.Init()
@@ -51,6 +69,5 @@ func main() {
 	// Write archive
 	if config.ShouldArchive() {
 		archive.Write()
-		os.RemoveAll(config.WorkDir)
 	}
 }
