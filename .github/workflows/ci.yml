@@ -2,23 +2,7 @@ name: Build & Release
 
 on:
   push:
-    paths:
-      - internal/**
-      - cmd/**
-      - go.*
-      - Makefile
-      - Dockerfile
-      - .dockerignore
-      - .github/workflows/ci.yml
   pull_request:
-    paths:
-      - internal/**
-      - cmd/**
-      - go.*
-      - Makefile
-      - Dockerfile
-      - .dockerignore
-      - .github/workflows/ci.yml
 
 env:
   APP_NAME: traceneck
@@ -77,7 +61,6 @@ jobs:
           for arch in amd64 arm64; do
             tar xvzf ${arch}.tgz &&
             tar cvzf ${BASE_NAME}_${arch}.tar.gz -C bin ${APP_NAME} &&
-            tar cvzf ${BASE_NAME}_netrics_${arch}.tar.gz -C bin netrics-${APP_NAME} &&
             rm -rf ${arch}.tgz bin
           done
 

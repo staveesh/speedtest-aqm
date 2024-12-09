@@ -1,9 +1,9 @@
 .git/
+.github/
 .gitignore
 
-.github/
-
-assets/
+.vscode
+.DS_Store
 
 bin/
 data/

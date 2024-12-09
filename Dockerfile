@@ -121,7 +121,8 @@ apt-get install -y --no-install-recommends libpcap-dev ca-certificates tzdata
 rm -rf /var/lib/apt/lists/*
 APT-GET
 
-COPY --from=client ${CLIENT_DIR}/ndt7-client ${CLIENT_DIR}/speedtest /usr/local/bin
+COPY --from=client ${CLIENT_DIR}/ndt7-client ${CLIENT_DIR}/speedtest /usr/local/bin/
+COPY --from=client ${CLIENT_DIR}/speedtest /usr/local/bin/
 
 ENTRYPOINT ["traceneck"]
 
