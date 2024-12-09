@@ -29,6 +29,7 @@ var (
 	IdleTime  int              // idle time in seconds
 	Force     bool             // whether to confirm
 	Quiet     bool             // silence logging
+	Terse     bool             // terse rtt metadata
 
 	// other flags
 	help    bool
@@ -55,6 +56,7 @@ func Define() {
 	pflag.BoolVarP(&TShark, "tshark", "T", false, "Use TShark")
 	pflag.IntVarP(&IdleTime, "idle", "i", 10, "Post speedtest idle time (in secs)")
 	pflag.StringVarP(&OutPath, "out-path", "o", OutPath, "Output path [path with trailing slash for directory, file path for tar archive, \"-\" for stdout]")
+	pflag.BoolVarP(&Terse, "terse-metadata", "r", false, "Terse rtt metadata")
 	pflag.BoolVarP(&Quiet, "quiet", "q", false, "Minimize logging")
 	pflag.BoolVarP(&Force, "yes", "y", false, "Do not prompt for confirmation")
 	pflag.BoolVarP(&help, "help", "h", false, "Show this help")

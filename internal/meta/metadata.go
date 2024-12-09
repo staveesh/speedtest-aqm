@@ -97,7 +97,6 @@ func Collect() {
 
 	MetaD = Metadata{
 		Measurements: Measurements{
-			RttSamples:    slices.Collect(maps.Values(MSamples)),
 			BytesConsumed: MBytes,
 		},
 		Meta: MMeta,
@@ -107,6 +106,10 @@ func Collect() {
 		MetaD.Measurements.Ndt7 = &MNdt
 	} else {
 		MetaD.Measurements.Ookla = &MOokla
+	}
+
+	if !config.Terse {
+		MetaD.Measurements.RttSamples = slices.Collect(maps.Values(MSamples))
 	}
 
 	log.Println("[metadata] collected")

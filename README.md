@@ -47,6 +47,7 @@ Options:
   -T, --tshark             Use TShark
   -i, --idle int           Post speedtest idle time (in secs) (default 10)
   -o, --out-path string    Output path [path with trailing slash for directory, file path for tar archive, "-" for stdout] (default "data/")
+  -r, --terse-metadata     Terse rtt metadata
   -q, --quiet              Minimize logging
   -y, --yes                Do not prompt for confirmation
   -h, --help               Show this help
