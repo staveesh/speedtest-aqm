@@ -7,47 +7,51 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/internet-equity/traceneck/internal/config"
 	"github.com/internet-equity/traceneck/internal/meta"
 	"github.com/internet-equity/traceneck/internal/network"
-	"github.com/internet-equity/traceneck/internal/util"
 )
 
-func CreateArchive() {
-	archiveFile := strings.ReplaceAll(
-		util.GetFilePath(config.OutDir, "measurement.tar.gz", config.Timestamp),
-		":", "-",
-	)
-	archiveWriter, err := os.Create(archiveFile)
-	if err != nil {
-		log.Println("[archive] error opening archive file:", err)
-		return
+func Write() {
+	var outFile *os.File
+
+	if config.OutPath == "-" {
+		outFile = os.Stdout
+	} else {
+		var err error
+		outFile, err = os.Create(config.OutPath)
+		if err != nil {
+			log.Println("[archive] error opening archive file:", err)
+			return
+		}
+		defer outFile.Close()
 	}
-	defer archiveWriter.Close()
 
-	gw, _ := gzip.NewWriterLevel(archiveWriter, gzip.BestCompression)
-	defer gw.Close()
+	var archive *tar.Writer
 
-	tw := tar.NewWriter(gw)
-	defer tw.Close()
+	if outExt := filepath.Ext(config.OutPath); outExt == ".gz" || outExt == ".tgz" {
+		writer, _ := gzip.NewWriterLevel(outFile, gzip.BestCompression)
+		defer writer.Close()
 
-	if err := addFileToTar(tw, meta.MetaFile); err != nil {
+		archive = tar.NewWriter(writer)
+	} else {
+		archive = tar.NewWriter(outFile)
+	}
+	defer archive.Close()
+
+	if err := addFileToTar(archive, meta.MetaFile); err != nil {
 		log.Fatalln("[archive] error writing", meta.MetaFile, "to tar:", err.Error())
 	}
 
-	if err := addFileToTar(tw, network.CapFile); err != nil {
-		log.Fatalln("[archive] error writing", meta.MetaFile, "to tar:", err.Error())
+	if err := addFileToTar(archive, network.CapFile); err != nil {
+		log.Fatalln("[archive] error writing", network.CapFile, "to tar:", err.Error())
 	}
 
-	os.Remove(meta.MetaFile)
-	os.Remove(network.CapFile)
-
-	log.Println("[archive] data archived to:", archiveFile)
+	log.Println("[archive] data archived to:", config.OutPath)
 }
 
-func addFileToTar(tw *tar.Writer, fileName string) error {
+func addFileToTar(archive *tar.Writer, fileName string) error {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return err
@@ -59,7 +63,7 @@ func addFileToTar(tw *tar.Writer, fileName string) error {
 		return err
 	}
 
-	if err := tw.WriteHeader(&tar.Header{
+	if err := archive.WriteHeader(&tar.Header{
 		Name:    filepath.Base(fileName),
 		Size:    fileInfo.Size(),
 		Mode:    int64(fileInfo.Mode()),
@@ -68,6 +72,6 @@ func addFileToTar(tw *tar.Writer, fileName string) error {
 		return err
 	}
 
-	_, err = io.Copy(tw, file)
+	_, err = io.Copy(archive, file)
 	return err
 }

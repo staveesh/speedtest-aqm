@@ -1,0 +1,12 @@
+.git/
+.gitignore
+
+.github/
+
+assets/
+
+bin/
+data/
+
+LICENSE
+README.md

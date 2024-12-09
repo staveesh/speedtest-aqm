@@ -9,7 +9,7 @@ import (
 	"slices"
 
 	"github.com/internet-equity/traceneck/internal/config"
-	"github.com/internet-equity/traceneck/internal/util"
+	timeUtil "github.com/internet-equity/traceneck/internal/util/time"
 )
 
 type MeasureNdt struct {
@@ -83,8 +83,8 @@ var (
 
 func Init() {
 	MMeta = Meta{
-		Time:          util.GetTime(config.Timestamp),
-		ToolStartTime: util.GetTime(),
+		Time:          timeUtil.UnixPrecise(config.Timestamp),
+		ToolStartTime: timeUtil.GetTime(),
 		Interface:     config.Interface,
 		InterfaceIP:   config.InterfaceIP,
 	}
@@ -93,7 +93,7 @@ func Init() {
 }
 
 func Collect() {
-	MMeta.ToolEndTime = util.GetTime()
+	MMeta.ToolEndTime = timeUtil.GetTime()
 
 	MetaD = Metadata{
 		Measurements: Measurements{
@@ -113,7 +113,7 @@ func Collect() {
 }
 
 func Write() {
-	MetaFile = util.GetFilePath(config.OutDir, "metadata.json", config.Timestamp)
+	MetaFile = config.GetFilePath("metadata.json")
 	metaWriter, err := os.Create(MetaFile)
 	if err != nil {
 		log.Fatalln("[metadata] error opening metadata file:", err.Error())

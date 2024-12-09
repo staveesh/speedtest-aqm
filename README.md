@@ -1,4 +1,6 @@
-# Bottleneck Link Locator in Access networks
+# Traceneck
+
+Bottleneck Link Locator in Access networks
 
 ## Prerequisites
 
@@ -12,36 +14,23 @@
 
 ## Build from Source
 
-Install [go](https://go.dev/dl/), [make](https://www.gnu.org/software/make/) (recommended) and run
+Install [go](https://go.dev/dl/), [make](https://www.gnu.org/software/make/) (recommended) and run:
 
 ```sh
-make build # OR make release
-make setcap
+make build setcap
+
+# OR release:
+# make release setcap
+
 ./bin/traceneck
 ```
 
-OR use [docker](https://docs.docker.com/engine/install/)
+OR use [Docker](https://docs.docker.com/engine/install/):
 
 ```sh
 make docker
+
 docker run --rm -v ./data:/data traceneck:latest
-```
-
-## Build for Netrics
-
-```sh
-export NETRICS=true
-make build # OR make release
-make setcap
-./bin/netrics-traceneck
-```
-
-OR use [docker](https://docs.docker.com/engine/install/)
-
-```sh
-export NETRICS=true
-make docker
-docker run --rm traceneck:netrics
 ```
 
 ## Options
@@ -50,15 +39,16 @@ docker run --rm traceneck:netrics
 Usage: traceneck [OPTIONS]
 
 Options:
-  -I, --interface string   Interface (default "enp2s0")
+  -I, --interface string   Interface (default "…")
   -t, --tool string        Speedtest tool to use: ndt or ookla (default "ndt")
   -p, --ping-type string   Ping packet type: icmp or udp (default "icmp")
   -m, --max-ttl int        Maximum TTL until which to send pings (default 5)
-  -d, --direct int         Hop to ping directly by icmp echo [0 to skip] (default 1)
-  -o, --out-dir string     Output directory (default "data")
+  -d, --direct-hop int     Hop to ping directly by icmp echo [0 to skip] (default 1)
   -T, --tshark             Use TShark
   -i, --idle int           Post speedtest idle time (in secs) (default 10)
-  -a, --archive            Create output archive
+  -o, --out-path string    Output path [path with trailing slash for directory, file path for tar archive, "-" for stdout] (default "data/")
+  -q, --quiet              Minimize logging
+  -y, --yes                Do not prompt for confirmation
   -h, --help               Show this help
   -v, --version            Show version
 ```

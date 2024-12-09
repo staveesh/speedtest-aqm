@@ -1,23 +1,14 @@
 GOCMD=go
 GOBUILD=${GOCMD} build
 
-CMD_DIR=./cmd
-BIN_DIR=./bin
-NETRICS?=false
+CMD_DIR=./
+BIN_DIR=./bin/
 
-ifeq ($(NETRICS), true)
-	CMD_NAME=netrics
-	BIN_NAME=netrics-traceneck
-	DOCKER_TARGET=netrics
-	DOCKER_TAG=netrics
-else
-	CMD_NAME=main
-	BIN_NAME=traceneck
-	DOCKER_TARGET=main
-	DOCKER_TAG=latest
-endif
+CMD_FILE=main.go
+BIN_NAME=traceneck
+DOCKER_TAG=latest
 
-CMD=${CMD_DIR}/${CMD_NAME}
+CMD=${CMD_DIR}/${CMD_FILE}
 BIN=${BIN_DIR}/${BIN_NAME}
 
 GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null)
@@ -41,10 +32,10 @@ clean:
 	rm -rf ${BIN_DIR}
 
 build: ${CMD}
-	${GOBUILD} -o ${BIN} -ldflags="${LD_FLAGS}" ${CMD}
+	${GOBUILD} -o ${BIN} -ldflags="${LD_FLAGS}" ${CMD_DIR}
 
 release: ${CMD}
-	${GOBUILD} -o ${BIN} -ldflags="${LD_FLAGS} -s -w" -trimpath ${CMD}
+	${GOBUILD} -o ${BIN} -ldflags="${LD_FLAGS} -s -w" -trimpath ${CMD_DIR}
 
 setcap: ${BIN}
 	sudo setcap cap_net_raw,cap_net_admin=eip ${BIN}
@@ -53,6 +44,5 @@ setcap: ${BIN}
 docker:
 	docker build \
 	--build-arg NAME=${BIN_NAME} \
-	--build-arg NETRICS=${NETRICS} \
 	--build-arg VERSION="${VERSION}" \
 	-t traceneck:${DOCKER_TAG} .
