@@ -28,7 +28,13 @@ func handleEchoReply(replyIP net.IP, recvTime time.Time, msg *icmp.Message) {
 	i := pktNo % slots
 	round := pktNo / slots
 
-	reqTime := timestamps[i][round]
+	var reqTime time.Time
+	if value, ok := timestamps[i].Load(round); ok {
+		reqTime = value.(time.Time)
+	} else {
+		return
+	}
+
 	rtt := float64(recvTime.Sub(reqTime).Nanoseconds()) / 1000000
 
 	meta.MSamples[pktNo] = meta.RttSample{
@@ -41,7 +47,7 @@ func handleEchoReply(replyIP net.IP, recvTime time.Time, msg *icmp.Message) {
 		IcmpSeqNo: pktNo,
 	}
 
-	if i == config.DirectHop && directHopIP == nil {
+	if directHopIP == nil && i == config.DirectHop {
 		directHopIP = replyIP
 	}
 }
@@ -82,26 +88,24 @@ func senderICMP(i int, dstIP net.IP) {
 		return
 	}
 
-	timestamps[i] = make(map[int]time.Time)
 	dstAddr := &net.IPAddr{IP: dstIP}
+	msg := &icmp.Message{
+		Type: typeEchoRequest,
+		Code: 0,
+		Body: &icmp.Echo{
+			ID:  ID,
+			Seq: i - slots,
+		},
+	}
 
 	for r := 0; ; r++ {
 		select {
 		case <-channel.Stop:
 			return
 		case <-time.After(packetSendDelay):
-			msg := &icmp.Message{
-				Type: typeEchoRequest,
-				Code: 0,
-				Body: &icmp.Echo{
-					ID:   ID,
-					Seq:  i + r*slots,
-					Data: nil,
-				},
-			}
-
+			msg.Body.(*icmp.Echo).Seq += slots
 			if msgBytes, err := msg.Marshal(nil); err == nil {
-				timestamps[i][r] = time.Now()
+				timestamps[i].Store(r, time.Now())
 				if _, err := conn.WriteTo(msgBytes, dstAddr); err != nil {
 					log.Println("[ping] [icmp sender] error sending packet:", err)
 				}
@@ -115,7 +119,8 @@ func senderICMP(i int, dstIP net.IP) {
 func lostLoggerICMP(i int) (total, dropped int) {
 	ttl := getTTL(i)
 
-	for r, reqTime := range timestamps[i] {
+	timestamps[i].Range(func(key, value any) bool {
+		r := key.(int)
 		pktNo := i + r*slots
 		total += 1
 
@@ -123,13 +128,14 @@ func lostLoggerICMP(i int) (total, dropped int) {
 			meta.MSamples[pktNo] = meta.RttSample{
 				TTL:       ttl,
 				Round:     r + 1,
-				SendTime:  timeUtil.UnixPrecise(reqTime),
+				SendTime:  timeUtil.UnixPrecise(value.(time.Time)),
 				IcmpSeqNo: pktNo,
 			}
-
 			dropped += 1
 		}
-	}
+
+		return true
+	})
 
 	return
 }

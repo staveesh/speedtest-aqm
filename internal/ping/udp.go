@@ -38,7 +38,13 @@ func handleTimeExceededUDP(replyIP net.IP, recvTime time.Time, msg *icmp.Message
 	i := pktNo % slots
 	round := pktNo / slots
 
-	reqTime := timestamps[i][round]
+	var reqTime time.Time
+	if value, ok := timestamps[i].Load(round); ok {
+		reqTime = value.(time.Time)
+	} else {
+		return
+	}
+
 	rtt := float64(recvTime.Sub(reqTime).Nanoseconds()) / 1000000
 
 	meta.MSamples[pktNo] = meta.RttSample{
@@ -75,17 +81,19 @@ func senderUDP(i int, dstIP net.IP) {
 		return
 	}
 
-	timestamps[i] = make(map[int]time.Time)
+	dstAddr := net.UDPAddr{
+		IP:   dstIP,
+		Port: startingPort + i - slots,
+	}
+
 	for r := 0; ; r++ {
 		select {
 		case <-channel.Stop:
 			return
 		case <-time.After(packetSendDelay):
-			timestamps[i][r] = time.Now()
-			if _, err := conn.WriteTo(nil, &net.UDPAddr{
-				IP:   dstIP,
-				Port: startingPort + i + r*slots,
-			}); err != nil {
+			dstAddr.Port += slots
+			timestamps[i].Store(r, time.Now())
+			if _, err := conn.WriteTo(nil, &dstAddr); err != nil {
 				log.Println("[ping] [udp sender] error sending packet:", err)
 			}
 		}
@@ -95,7 +103,8 @@ func senderUDP(i int, dstIP net.IP) {
 func lostLoggerUDP(i int) (total, dropped int) {
 	ttl := getTTL(i)
 
-	for r, reqTime := range timestamps[i] {
+	timestamps[i].Range(func(key, value any) bool {
+		r := key.(int)
 		pktNo := i + r*slots
 		total += 1
 
@@ -103,13 +112,14 @@ func lostLoggerUDP(i int) (total, dropped int) {
 			meta.MSamples[pktNo] = meta.RttSample{
 				TTL:         ttl,
 				Round:       r + 1,
-				SendTime:    timeUtil.UnixPrecise(reqTime),
+				SendTime:    timeUtil.UnixPrecise(value.(time.Time)),
 				UdpDestPort: startingPort + pktNo,
 			}
-
 			dropped += 1
 		}
-	}
+
+		return true
+	})
 
 	return
 }

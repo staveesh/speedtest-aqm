@@ -3,6 +3,7 @@ package ping
 import (
 	"log"
 	"net"
+	"sync"
 	"time"
 
 	"golang.org/x/net/icmp"
@@ -28,7 +29,7 @@ const (
 
 var (
 	slots      int
-	timestamps []map[int]time.Time
+	timestamps []sync.Map
 
 	stopListener channel.Type
 	listenerDone channel.Type
@@ -61,7 +62,7 @@ func PingProcess() {
 	defer close(channel.PingDone)
 
 	slots = config.MaxTTL + 1
-	timestamps = make([]map[int]time.Time, slots)
+	timestamps = make([]sync.Map, slots)
 
 	stopListener = make(channel.Type)
 	listenerDone = make(channel.Type)
@@ -129,15 +130,15 @@ func PingProcess() {
 		dropped int
 	)
 
-	if len(timestamps[0]) > 0 {
-		total, dropped = lostLoggerICMP(0)
-	} else {
+	if directHopIP == nil {
 		meta.MSamples[0] = meta.RttSample{
 			TTL:       config.DirectHop,
 			Round:     0,
 			ReplyIP:   net.ParseIP("0.0.0.0"),
 			IcmpSeqNo: 0,
 		}
+	} else {
+		total, dropped = lostLoggerICMP(0)
 	}
 	log.Println("[ping] hop:", config.DirectHop, "total:", total, "dropped:", dropped)
 
