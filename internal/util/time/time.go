@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-func GetTime() float64 {
+func UnixNow() float64 {
 	return UnixPrecise(time.Now())
 }
 

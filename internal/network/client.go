@@ -34,7 +34,7 @@ func SpeedtestProcess() {
 	}
 	cmd.Stdout = logOut
 
-	meta.MMeta.SpeedtestStartTime = timeUtil.GetTime()
+	meta.MMeta.SpeedtestStartTime = timeUtil.UnixNow()
 	if err := cmd.Start(); err != nil {
 		log.Println("[speedtest] client error:", err)
 		return
@@ -48,7 +48,7 @@ func SpeedtestProcess() {
 		log.Println("[speedtest] client error:", err)
 		return
 	}
-	meta.MMeta.SpeedtestEndTime = timeUtil.GetTime()
+	meta.MMeta.SpeedtestEndTime = timeUtil.UnixNow()
 	log.Println("[speedtest] complete")
 
 	<-logParserDone

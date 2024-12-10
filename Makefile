@@ -8,8 +8,8 @@ CMD_FILE=main.go
 BIN_NAME=traceneck
 DOCKER_TAG=latest
 
-CMD=${CMD_DIR}/${CMD_FILE}
-BIN=${BIN_DIR}/${BIN_NAME}
+CMD=${CMD_DIR}${CMD_FILE}
+BIN=${BIN_DIR}${BIN_NAME}
 
 GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null)
 GIT_DIRTY=$(shell git diff --quiet --ignore-submodules HEAD 2>/dev/null || echo '!')

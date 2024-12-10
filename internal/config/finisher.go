@@ -18,7 +18,7 @@ type ConfigFinish interface {
 
 // ConfigEval
 //
-// Standard finishers evalute user-provided configuration,
+// Standard finishers evaluate user-provided configuration,
 // returning a standard log message for valid values
 // or a value-dependent error message for invalid values
 //

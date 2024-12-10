@@ -84,7 +84,7 @@ var (
 func Init() {
 	MMeta = Meta{
 		Time:          timeUtil.UnixPrecise(config.Timestamp),
-		ToolStartTime: timeUtil.GetTime(),
+		ToolStartTime: timeUtil.UnixNow(),
 		Interface:     config.Interface,
 		InterfaceIP:   config.InterfaceIP,
 	}
@@ -93,7 +93,7 @@ func Init() {
 }
 
 func Collect() {
-	MMeta.ToolEndTime = timeUtil.GetTime()
+	MMeta.ToolEndTime = timeUtil.UnixNow()
 
 	MetaD = Metadata{
 		Measurements: Measurements{

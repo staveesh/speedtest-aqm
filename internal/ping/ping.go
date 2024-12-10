@@ -99,7 +99,7 @@ func PingProcess() {
 	}
 
 	log.Println("[ping] started")
-	meta.MMeta.PingStartTime = timeUtil.GetTime()
+	meta.MMeta.PingStartTime = timeUtil.UnixNow()
 
 	go listener()
 
@@ -122,7 +122,7 @@ func PingProcess() {
 	close(stopListener)
 	<-listenerDone
 
-	meta.MMeta.PingEndTime = timeUtil.GetTime()
+	meta.MMeta.PingEndTime = timeUtil.UnixNow()
 	log.Println("[ping] stopped")
 
 	var (
