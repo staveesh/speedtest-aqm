@@ -54,7 +54,7 @@ func handleTimeExceededUDP(replyIP net.IP, recvTime time.Time, msg *icmp.Message
 		SendTime:    timeUtil.UnixPrecise(reqTime),
 		RecvTime:    timeUtil.UnixPrecise(recvTime),
 		RTT:         rtt,
-		UdpDestPort: dstPort,
+		UdpDestPort: &dstPort,
 	}
 
 	if i == config.DirectHop && directHopIP == nil {
@@ -109,11 +109,12 @@ func lostLoggerUDP(i int) (total, dropped int) {
 		total += 1
 
 		if _, ok := meta.MSamples[pktNo]; !ok {
+			udpPort := startingPort + pktNo
 			meta.MSamples[pktNo] = meta.RttSample{
 				TTL:         ttl,
 				Round:       r + 1,
 				SendTime:    timeUtil.UnixPrecise(value.(time.Time)),
-				UdpDestPort: startingPort + pktNo,
+				UdpDestPort: &udpPort,
 			}
 			dropped += 1
 		}

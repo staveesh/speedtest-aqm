@@ -135,7 +135,7 @@ func PingProcess() {
 			TTL:       config.DirectHop,
 			Round:     0,
 			ReplyIP:   net.ParseIP("0.0.0.0"),
-			IcmpSeqNo: 0,
+			IcmpSeqNo: new(int),
 		}
 	} else {
 		total, dropped = lostLoggerICMP(0)

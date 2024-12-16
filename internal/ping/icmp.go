@@ -44,7 +44,7 @@ func handleEchoReply(replyIP net.IP, recvTime time.Time, msg *icmp.Message) {
 		SendTime:  timeUtil.UnixPrecise(reqTime),
 		RecvTime:  timeUtil.UnixPrecise(recvTime),
 		RTT:       rtt,
-		IcmpSeqNo: pktNo,
+		IcmpSeqNo: &pktNo,
 	}
 
 	if directHopIP == nil && i == config.DirectHop {
@@ -129,7 +129,7 @@ func lostLoggerICMP(i int) (total, dropped int) {
 				TTL:       ttl,
 				Round:     r + 1,
 				SendTime:  timeUtil.UnixPrecise(value.(time.Time)),
-				IcmpSeqNo: pktNo,
+				IcmpSeqNo: &pktNo,
 			}
 			dropped += 1
 		}

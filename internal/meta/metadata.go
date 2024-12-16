@@ -39,8 +39,8 @@ type RttSample struct {
 	SendTime    float64 `json:"send_time"`
 	RecvTime    float64 `json:"recv_time"`
 	RTT         float64 `json:"rtt"`
-	IcmpSeqNo   int     `json:"icmp_seq_no,omitempty"`
-	UdpDestPort int     `json:"udp_dest_port,omitempty"`
+	IcmpSeqNo   *int    `json:"icmp_seq_no,omitempty"`
+	UdpDestPort *int    `json:"udp_dest_port,omitempty"`
 }
 
 type Measurements struct {
