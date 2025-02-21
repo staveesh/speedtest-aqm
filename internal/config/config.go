@@ -52,7 +52,7 @@ var (
 func Define() {
 	pflag.StringVarP(&Interface, "interface", "I", defaultInterface(), "Interface")
 	pflag.StringVarP(&Tool, "tool", "t", "ndt", "Speedtest tool to use: ndt or ookla")
-	pflag.StringVarP(&Server, "server", "s", "", "IP address for custom server. Optional. If not provided, will use default server.")
+	pflag.StringVarP(&Server, "server", "s", "", "IP address and port (<ip>:<port>) for custom server. Optional. If not provided, will use default server.")
 	pflag.BoolVarP(&NoPing, "no-ping", "n", false, "Skip pings")
 	pflag.StringVarP(&PingType, "ping-type", "p", "icmp", "Ping packet type: icmp or udp")
 	pflag.IntVarP(&MaxTTL, "max-ttl", "m", 5, "Maximum TTL until which to send pings")

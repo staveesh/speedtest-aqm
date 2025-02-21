@@ -35,7 +35,7 @@ func SpeedtestProcess() {
 	} else {
 		cmdArgs := []string{"-format", "json"}
 		if config.Server != "" {
-			cmdArgs = append(cmdArgs, "-server", config.Server)
+			cmdArgs = append(cmdArgs, "-no-verify", "-server", config.Server)
 		}
 		cmd = exec.Command("ndt7-client", cmdArgs...)
 		logParser = logParserNdt7
