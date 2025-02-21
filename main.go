@@ -46,8 +46,10 @@ func main() {
 	// Start speedtest client
 	go network.SpeedtestProcess()
 
-	// Start pings to server
-	go ping.PingProcess()
+	// Start pings to server if enabled
+	if !config.NoPing {
+		go ping.PingProcess()
+	}
 
 	// Wait until speedtest is complete
 	<-channel.SpeedtestDone
@@ -57,7 +59,9 @@ func main() {
 
 	// Stop all processes
 	close(channel.Stop)
-	<-channel.PingDone
+	if !config.NoPing {
+		<-channel.PingDone
+	}
 	<-channel.CaptureDone
 
 	// Collect metadata

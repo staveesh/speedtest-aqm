@@ -22,16 +22,25 @@ func SpeedtestProcess() {
 	defer logOut.Close()
 
 	cmd := exec.Command("ndt7-client", "-format", "json")
-	logParser := logParserNdt7
+
+	var logParser func(*io.PipeReader)
+
 	if config.Tool == "ookla" {
-		cmd = exec.Command(
-			"speedtest",
-			"--accept-license",
-			"-f", "json",
-			"-p", "yes",
-		)
+		cmdArgs := []string{"--accept-license", "-f", "json", "-p", "yes"}
+		if config.Server != "" {
+			cmdArgs = append(cmdArgs, "--host", config.Server)
+		}
+		cmd = exec.Command("speedtest", cmdArgs...)
 		logParser = logParserOokla
+	} else {
+		cmdArgs := []string{"-format", "json"}
+		if config.Server != "" {
+			cmdArgs = append(cmdArgs, "-server", config.Server)
+		}
+		cmd = exec.Command("ndt7-client", cmdArgs...)
+		logParser = logParserNdt7
 	}
+
 	cmd.Stdout = logOut
 
 	meta.MMeta.SpeedtestStartTime = timeUtil.UnixNow()

@@ -39,8 +39,10 @@ docker run --rm -v ./data:/data traceneck:latest
 Usage: traceneck [OPTIONS]
 
 Options:
-  -I, --interface string   Interface (default "…")
+  -I, --interface string   Interface (default "enp0s31f6")
   -t, --tool string        Speedtest tool to use: ndt or ookla (default "ndt")
+  -s, --server string      IP address for custom server. Optional. If not provided, will use default server.
+  -n, --no-ping            Skip pings
   -p, --ping-type string   Ping packet type: icmp or udp (default "icmp")
   -m, --max-ttl int        Maximum TTL until which to send pings (default 5)
   -d, --direct-hop int     Hop to ping directly by icmp echo [0 to skip] (default 1)
