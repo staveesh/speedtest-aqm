@@ -51,6 +51,7 @@ type RttSample struct {
 type Measurements struct {
 	Ndt7          *MeasureNdt   `json:"ndt7,omitempty"`
 	Ookla         *MeasureOokla `json:"ookla,omitempty"`
+	Iperf         *MeasureIperf `json:"iperf,omitempty"`
 	RttSamples    []RttSample   `json:"rtt_samples"`
 	BytesConsumed int64         `json:"test_bytes_consumed"`
 }
@@ -110,8 +111,10 @@ func Collect() {
 
 	if config.Tool == "ndt" {
 		MetaD.Measurements.Ndt7 = &MNdt
-	} else {
+	} else if config.Tool == "ookla" {	
 		MetaD.Measurements.Ookla = &MOokla
+	} else if config.Tool == "iperf" {
+		MetaD.Measurements.Iperf = &MIperf
 	}
 
 	if !config.Terse {
