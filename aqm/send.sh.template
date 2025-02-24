@@ -1,0 +1,18 @@
+#!/bin/bash/
+
+export KEY_PATH=<RSA_PRIVATE_KEY_PATH>
+
+# Rememeber to start iperf server on the target machine
+# iperf3 -s
+
+sudo ip route add 192.168.1.166 via 192.168.1.1 dev enp88s0
+traceroute 192.168.1.166
+
+# Verify the traceroute has 192.168.1.1 as the first hop
+# else exit with error
+if [ $? -ne 0 ]; then
+    echo "Error: Traceroute failed"
+    exit 1
+fi
+
+python3 send.py
