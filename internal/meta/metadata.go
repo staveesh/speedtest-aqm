@@ -32,6 +32,11 @@ type MeasureOokla struct {
 	Upload     float64 `json:"speedtest_ookla_upload"`
 }
 
+type MeasureIperf struct {
+	Download float64 `json:"speedtest_iperf_download"`
+	Upload   float64 `json:"speedtest_iperf_upload"`
+}
+
 type RttSample struct {
 	TTL         int     `json:"ttl"`
 	Round       int     `json:"round"`
@@ -71,6 +76,7 @@ type Metadata struct {
 var (
 	MNdt   MeasureNdt
 	MOokla MeasureOokla
+	MIperf MeasureIperf
 
 	MSamples       = make(map[int]RttSample)
 	MBytes   int64 = 0

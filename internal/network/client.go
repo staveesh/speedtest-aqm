@@ -21,18 +21,26 @@ func SpeedtestProcess() {
 	logIn, logOut := io.Pipe()
 	defer logOut.Close()
 
-	cmd := exec.Command("ndt7-client", "-format", "json")
-
+	var cmd *exec.Cmd
 	var logParser func(*io.PipeReader)
 
-	if config.Tool == "ookla" {
+	switch config.Tool {
+	case "ookla":
 		cmdArgs := []string{"--accept-license", "-f", "json", "-p", "yes"}
 		if config.Server != "" {
 			cmdArgs = append(cmdArgs, "--host", config.Server)
 		}
 		cmd = exec.Command("speedtest", cmdArgs...)
 		logParser = logParserOokla
-	} else {
+	case "iperf":
+		cmdArgs := []string{"-c", config.Server, "-J"}
+		if config.Server == "" {
+			log.Println("[iperf] No server specified, using default iperf3 public servers may be required.")
+			cmdArgs = []string{"-J"}
+		}
+		cmd = exec.Command("iperf3", cmdArgs...)
+		logParser = logParserIperf
+	default:
 		cmdArgs := []string{"-format", "json"}
 		if config.Server != "" {
 			cmdArgs = append(cmdArgs, "-no-verify", "-server", config.Server)
