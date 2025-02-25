@@ -4,16 +4,16 @@ from pathlib import Path
 from tqdm import tqdm
 import time
 
-bw_vals_mbps = [1000]
-latency = [20]
+bw_vals_mbps = [300]
+latency = [10]
 loss = [0]
-aqm = "cake"
+aqm = "fq_codel"
 # tools = ["ndt"]
-interfaces = ["eth1"]
+interfaces = ["lan1"] # lan3 is download (hop 1), eth2 is upload (hop 2)
 router_username = "root"
 router_hostname = "192.168.1.1"
 shaper_script = "aqm_shaper.sh"
-server_ip = '192.168.1.166'
+server_ip = '192.168.1.166:443'
 
 num_reps_per_config = 1
 
@@ -64,6 +64,14 @@ def check_if_stopped(iface):
 def run_iperf(ip):
     os.system(f"iperf3 -c {ip}")
 
+def run_speedtest(output_root):
+    current_time = time.strftime("%Y%m%d-%H%M%S")
+    file_name = f"speedtest_{current_time}.txt"
+    output_dir = f"{output_root}/{file_name}"
+
+    os.system(f"ndt7-client -upload=false -server {server_ip} -no-verify > {output_dir}")
+    print(f"Speedtest output saved to {output_dir}")
+
 def go(resume_index=0):
     
     print(f"##################### Run #{resume_index} Starting ########################")
@@ -71,12 +79,13 @@ def go(resume_index=0):
     time.sleep(1)
 
     check_aqm_status(interfaces[0])
-    time.sleep(5)
-
-    run_iperf(server_ip)
+    time.sleep(1)
 
     output_dir = f"{output_root}/{interfaces[0]}_{bw_vals_mbps[0]}mbps_{latency[0]}ms_{loss[0]}loss_{aqm}"
     Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+     # run_iperf(server_ip)
+    run_speedtest(output_dir)
 
     stop_shaping(interfaces[0], bw_vals_mbps[0], latency[0], loss[0], aqm)
     print(f"##################### Run #{resume_index} Ending ########################")
@@ -84,20 +93,6 @@ def go(resume_index=0):
     time.sleep(1)
 
     check_if_stopped(interfaces[0])
-
-
-# def run_tool(speedtest_tool, output_dir):
-#     result = subprocess.run(
-#         [binary_path, "-t", speedtest_tool, "-o", output_dir, "-a"],
-#         stdout = subprocess.PIPE,
-#         stderr = subprocess.PIPE,
-#         text = True
-#     )
-#     print("############### Output #####################")
-#     print(result.stdout)
-#     print("############### Errors #####################")
-#     print(result.stderr)
-#     print("############################################")
 
 if __name__ == '__main__':
     go()

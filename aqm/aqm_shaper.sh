@@ -21,15 +21,20 @@ start() {
 
     # Add HTB root qdisc and set bandwidth
     $TC qdisc add dev $IFACE root handle 1: htb default 11
-    $TC class add dev $IFACE parent 1: classid 1:11 htb rate ${BW}kbit ceil ${BW}kbit
+    $TC class add dev $IFACE parent 1: classid 1:11 htb rate ${BW}kbit
 
     # Add netem for delay and packet loss
     $TC qdisc add dev $IFACE parent 1:11 handle 10: netem delay ${LATENCY}ms loss ${LOSS}%
 
-    # Apply AQM (fq_codel, cake, or pie)
-    $TC qdisc add dev $IFACE parent 10: handle 20: $AQM_METHOD
+    # Apply AQM (fq_codel, cake, or pie) if $6 is set
+    # else use default pfifo_fast
+    if $6 ; then
+        $TC qdisc add dev $IFACE parent 10: handle 20: ${AQM_METHOD}
+        echo "Traffic shaping applied with $AQM_METHOD on $IFACE"
+    else
+        echo "No AQM method added"
+    fi
 
-    echo "Traffic shaping applied with $AQM_METHOD on $IFACE"
 }
 
 stop() {
@@ -44,7 +49,7 @@ show() {
     $TC filter show dev $IFACE
 
     # Check if AQM is applied
-    AQM_CHECK=$($TC -s qdisc show dev $IFACE | grep -E "fq_codel|cake|pie")
+    AQM_CHECK=$($TC -s qdisc show dev $IFACE | grep -E "fq_codel|cake|pie|sfq|codel")
     if [[ -n "$AQM_CHECK" ]]; then
         echo "✅ AQM ($AQM_METHOD) is active on $IFACE."
     else
