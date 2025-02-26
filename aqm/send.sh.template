@@ -15,4 +15,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-python3 send.py
+# Attach a tmux session to the terminal and run the python script
+tmux new-session -d -s test-speed
+# Export the key path to the environment variable
+tmux send-keys -t test-speed "export KEY_PATH=$KEY_PATH" C-m
+# Run the python script
+tmux send-keys -t test-speed "python3 send.py" C-m

@@ -4,12 +4,12 @@ from pathlib import Path
 from tqdm import tqdm
 import time
 
-bw_vals_mbps = [300]
+bw_vals_mbps = [100, 200, 300, 400, 500]
 latency = [10]
 loss = [0]
-aqm = "fq_codel"
+aqm = ["fq_codel", "codel", "sfq"]
 # tools = ["ndt"]
-interfaces = ["lan1"] # lan3 is download (hop 1), eth2 is upload (hop 2)
+interfaces = ["lan3"] # lan3 is download (hop 1), eth2 is upload (hop 2)
 router_username = "root"
 router_hostname = "192.168.1.1"
 shaper_script = "aqm_shaper.sh"
@@ -18,7 +18,7 @@ server_ip = '192.168.1.166:443'
 num_reps_per_config = 1
 
 binary_path = "../../bin/bottleneck-finder"
-output_root = "data/"
+output_root = "data_json/"
 
 # get env variable KEY_PATH
 key_path = os.environ.get("KEY_PATH")
@@ -66,33 +66,39 @@ def run_iperf(ip):
 
 def run_speedtest(output_root):
     current_time = time.strftime("%Y%m%d-%H%M%S")
-    file_name = f"speedtest_{current_time}.txt"
+    file_name = f"speedtest_{current_time}.jsonl"
     output_dir = f"{output_root}/{file_name}"
 
-    os.system(f"ndt7-client -upload=false -server {server_ip} -no-verify > {output_dir}")
+    os.system(f"ndt7-client -server {server_ip} -no-verify -format json > {output_dir}")
     print(f"Speedtest output saved to {output_dir}")
 
-def go(resume_index=0):
-    
-    print(f"##################### Run #{resume_index} Starting ########################")
-    start_shaping(interfaces[0], bw_vals_mbps[0], latency[0], loss[0], aqm)
-    time.sleep(1)
+def go(resume_index=0, iters=10):
+   
+    for bw_idx in range(len(bw_vals_mbps)):
 
-    check_aqm_status(interfaces[0])
-    time.sleep(1)
+        for aqm_idx in range(len(aqm)):
+                
+             for idx in range(iters):
 
-    output_dir = f"{output_root}/{interfaces[0]}_{bw_vals_mbps[0]}mbps_{latency[0]}ms_{loss[0]}loss_{aqm}"
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
+                print(f"##################### Run #{resume_index} Starting ########################")
+                start_shaping(interfaces[0], bw_vals_mbps[bw_idx], latency[0], loss[0], aqm[aqm_idx])
+                time.sleep(1)
 
-     # run_iperf(server_ip)
-    run_speedtest(output_dir)
+                check_aqm_status(interfaces[0])
+                time.sleep(1)
 
-    stop_shaping(interfaces[0], bw_vals_mbps[0], latency[0], loss[0], aqm)
-    print(f"##################### Run #{resume_index} Ending ########################")
+                output_dir = f"{output_root}/{interfaces[0]}_{bw_vals_mbps[bw_idx]}_{latency[0]}_{loss[0]}_{aqm[aqm_idx]}"
+                Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    time.sleep(1)
+                # run_iperf(server_ip)
+                run_speedtest(output_dir)
 
-    check_if_stopped(interfaces[0])
+                stop_shaping(interfaces[0], bw_vals_mbps[bw_idx], latency[0], loss[0], aqm[aqm_idx])
+                print(f"##################### Run #{resume_index} Ending ########################")
+
+                time.sleep(1)
+
+                check_if_stopped(interfaces[0])
 
 if __name__ == '__main__':
     go()
