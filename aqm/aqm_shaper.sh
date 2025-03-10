@@ -26,13 +26,16 @@ start() {
     # Add netem for delay and packet loss
     $TC qdisc add dev $IFACE parent 1:11 handle 10: netem delay ${LATENCY}ms loss ${LOSS}%
 
-    # Apply AQM (fq_codel, cake, or pie) if $6 is set
+    # Apply AQM (fq_codel, cake, or pie) if $6 is != "none"
     # else use default pfifo_fast
-    if $6 ; then
+    if [[ $6 == "fq_codel" || $6 == "codel" || $6 == "sfq" ]]; then
         $TC qdisc add dev $IFACE parent 10: handle 20: ${AQM_METHOD}
         echo "Traffic shaping applied with $AQM_METHOD on $IFACE"
-    else
-        echo "No AQM method added"
+    # If method = "none", do nothing
+    elif [[ $6 == "none" ]]; then
+        # Add pfifo_fast qdisc to avoid AQM
+        $TC qdisc add dev $IFACE parent 10: handle 20: pfifo_fast
+        echo "Traffic shaping applied without AQM on $IFACE"
     fi
 
 }
