@@ -4,13 +4,13 @@ IFACE=$2
 BW=$3  # Bandwidth in kbps
 LATENCY=$4  # Delay in ms
 LOSS=$5  # Packet loss percentage
-AQM_METHOD=$6  # Change to "fq_codel", "cake" or "pie" if desired
+AQM_METHOD=$6  # Can be "fq_codel", "cake", "pie", or "no_aqm"
 
 TC=/sbin/tc
 
 start() {
     if [[ -z "$BW" || -z "$LATENCY" || -z "$LOSS" ]]; then
-        echo "Usage: $0 start <interface> <bandwidth_kbps> <latency_ms> <loss_percentage>"
+        echo "Usage: $0 start <interface> <bandwidth_kbps> <latency_ms> <loss_percentage> <aqm_method>"
         exit 1
     fi
 
@@ -26,18 +26,14 @@ start() {
     # Add netem for delay and packet loss
     $TC qdisc add dev $IFACE parent 1:11 handle 10: netem delay ${LATENCY}ms loss ${LOSS}%
 
-    # Apply AQM (fq_codel, cake, or pie) if $6 is != "none"
-    # else use default pfifo_fast
-    if [[ $6 == "fq_codel" || $6 == "codel" || $6 == "sfq" ]]; then
+    # Apply AQM method or fallback to tail drop if "no_aqm"
+    if [[ "$AQM_METHOD" == "no_aqm" ]]; then
+        $TC qdisc add dev $IFACE parent 10: handle 20: pfifo limit 100
+        echo "Traffic shaping applied with tail drop (pfifo) on $IFACE"
+    else
         $TC qdisc add dev $IFACE parent 10: handle 20: ${AQM_METHOD}
         echo "Traffic shaping applied with $AQM_METHOD on $IFACE"
-    # If method = "none", do nothing
-    elif [[ $6 == "none" ]]; then
-        # Add pfifo_fast qdisc to avoid AQM
-        $TC qdisc add dev $IFACE parent 10: handle 20: pfifo_fast
-        echo "Traffic shaping applied without AQM on $IFACE"
     fi
-
 }
 
 stop() {
@@ -55,6 +51,8 @@ show() {
     AQM_CHECK=$($TC -s qdisc show dev $IFACE | grep -E "fq_codel|cake|pie|sfq|codel")
     if [[ -n "$AQM_CHECK" ]]; then
         echo "✅ AQM ($AQM_METHOD) is active on $IFACE."
+    elif [[ "$AQM_METHOD" == "no_aqm" ]]; then
+        echo "✅ Tail drop (pfifo) is applied instead of AQM on $IFACE."
     else
         echo "❌ AQM is NOT applied!"
     fi
@@ -72,6 +70,6 @@ case "$CMD" in
         show
         ;;
     *)
-        echo "Usage: $0 {start|stop|show} <interface> <bandwidth_kbps> <latency_ms> <loss_percentage>"
+        echo "Usage: $0 {start|stop|show} <interface> <bandwidth_kbps> <latency_ms> <loss_percentage> <aqm_method>"
         ;;
 esac
