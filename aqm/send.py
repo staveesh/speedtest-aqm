@@ -18,7 +18,7 @@ server_ip = '192.168.1.166:443'
 num_reps_per_config = 1
 
 binary_path = "../../bin/bottleneck-finder"
-output_root = "data_json_900_iperf_notshaped/"
+output_root = "data_json_900_ndt_new/"
 
 # get env variable KEY_PATH
 key_path = os.environ.get("KEY_PATH")
@@ -97,8 +97,8 @@ def go(resume_index=0, iters=10):
                 output_dir = f"{output_root}/{interfaces[0]}_{bw_vals_mbps[bw_idx]}_{latency[0]}_{loss[0]}_{aqm[aqm_idx]}"
                 Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-                run_iperf(server_ip.split(":")[0], output_dir)
-                # run_speedtest(output_dir)
+                # run_iperf(server_ip.split(":")[0], output_dir)
+                run_speedtest(output_dir)
 
             stop_shaping(interfaces[0], bw_vals_mbps[bw_idx], latency[0], loss[0], aqm[aqm_idx])
             print(f"##################### Run #{resume_index} Ending ########################")

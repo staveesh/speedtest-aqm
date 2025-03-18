@@ -21,7 +21,7 @@ start() {
 
     # Add HTB root qdisc and set bandwidth
     $TC qdisc add dev $IFACE root handle 1: htb default 11
-    $TC class add dev $IFACE parent 1: classid 1:11 htb rate ${BW}kbit
+    $TC class add dev $IFACE parent 1: classid 1:11 htb rate ${BW}kbit ceil $((BW * 12 / 10))kbit burst $((BW * 18 / 1000))k cburst $((BW * 18 / 1000))k
 
     # Add netem for delay and packet loss
     $TC qdisc add dev $IFACE parent 1:11 handle 10: netem delay ${LATENCY}ms loss ${LOSS}%
