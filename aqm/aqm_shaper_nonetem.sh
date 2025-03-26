@@ -2,8 +2,8 @@
 CMD=$1
 IFACE=$2
 BW=$3  # Bandwidth in kbps
-LATENCY=$4  # Delay in ms
-LOSS=$5  # Packet loss percentage
+LATENCY=$4  # Delay in ms (not used)
+LOSS=$5  # Packet loss percentage (not used)
 AQM_METHOD=$6  # Can be "fq_codel", "cake", "pie", or "no_aqm"
 
 TC=/sbin/tc
@@ -23,15 +23,12 @@ start() {
     $TC qdisc add dev $IFACE root handle 1: htb default 11
     $TC class add dev $IFACE parent 1: classid 1:11 htb rate ${BW}kbit ceil $((BW * 16 / 10))kbit burst $((BW * 36 / 1000))k cburst $((BW * 36 / 1000))k
 
-    # Add netem for delay and packet loss
-    $TC qdisc add dev $IFACE parent 1:11 handle 10: netem delay ${LATENCY}ms loss ${LOSS}%
-
     # Apply AQM method or fallback to tail drop if "no_aqm"
     if [[ "$AQM_METHOD" == "no_aqm" ]]; then
-        $TC qdisc add dev $IFACE parent 10: handle 20: pfifo limit 100
+        $TC qdisc add dev $IFACE parent 1:11 handle 20: pfifo limit 100
         echo "Traffic shaping applied with tail drop (pfifo) on $IFACE"
     else
-        $TC qdisc add dev $IFACE parent 10: handle 20: ${AQM_METHOD}
+        $TC qdisc add dev $IFACE parent 1:11 handle 20: ${AQM_METHOD}
         echo "Traffic shaping applied with $AQM_METHOD on $IFACE"
     fi
 }
