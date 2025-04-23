@@ -32,6 +32,14 @@ func SpeedtestProcess() {
 		}
 		cmd = exec.Command("speedtest", cmdArgs...)
 		logParser = logParserOokla
+	case "ookla-http":
+		cmdArgs := []string{"--json", "--server-ip", config.Server}
+		if config.Server == ""{
+			cmdArgs = append(cmdArgs,"127.0.0.1:80")
+		}
+		cmd = exec.Command("tools/ookla-http/speedtest.py", cmdArgs...)
+		logParser = logParserOoklaHttp
+
 	case "iperf":
 		cmdArgs := []string{"-c", config.Server, "-J"}
 		if config.Server == "" {
@@ -65,6 +73,7 @@ func SpeedtestProcess() {
 		log.Println("[speedtest] client error:", err)
 		return
 	}
+
 	meta.MMeta.SpeedtestEndTime = timeUtil.UnixNow()
 	log.Println("[speedtest] complete")
 
