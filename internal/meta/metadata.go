@@ -36,7 +36,7 @@ type MeasureOoklaHttp struct {
 	Download   float64 `json:"speedtest_ookla_download"`
 	Latency    float64 `json:"speedtest_ookla_latency"`
 	ServerHost string  `json:"speedtest_ookla_server_host"`
-	ServerId   string     `json:"speedtest_ookla_server_id"`
+	ServerId   string  `json:"speedtest_ookla_server_id"`
 	ServerName string  `json:"speedtest_ookla_server_name"`
 	Upload     float64 `json:"speedtest_ookla_upload"`
 }
@@ -58,12 +58,12 @@ type RttSample struct {
 }
 
 type Measurements struct {
-	Ndt7          *MeasureNdt   `json:"ndt7,omitempty"`
-	Ookla         *MeasureOokla `json:"ookla,omitempty"`
+	Ndt7          *MeasureNdt   	`json:"ndt7,omitempty"`
+	Ookla         *MeasureOokla 	`json:"ookla,omitempty"`
 	OoklaHttp     *MeasureOoklaHttp `json:"ooklahttp,omitempty"`
-	Iperf         *MeasureIperf `json:"iperf,omitempty"`
-	RttSamples    []RttSample   `json:"rtt_samples"`
-	BytesConsumed int64         `json:"test_bytes_consumed"`
+	Iperf         *MeasureIperf 	`json:"iperf,omitempty"`
+	RttSamples    []RttSample   	`json:"rtt_samples"`
+	BytesConsumed int64         	`json:"test_bytes_consumed"`
 }
 
 type Meta struct {

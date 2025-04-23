@@ -61,14 +61,6 @@ func logParserOoklaHttp(logPipe *io.PipeReader) {
 		log.Fatalf("[speedtest] [log parser] failed to grab server ip")
 	}
 
-//	for scanner.Scan() {
-//		line = scanner.Text()
-//
-//		if strings.Contains(line, "result") {
-//			break
-//		}
-//	}
-
 	if err := json.Unmarshal([]byte(line), &ooklaResultInfo); err == nil {
 		meta.MOoklaHttp = meta.MeasureOoklaHttp{
 			Download: float64(ooklaResultInfo.Download) * 8 / 1000000,
