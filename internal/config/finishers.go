@@ -115,6 +115,8 @@ var finishers = [...]func() ConfigFinish{
 			cmd = exec.Command("ndt7-client", "--help")
 		} else if Tool == "ookla" {
 			cmd = exec.Command("speedtest", "--version")
+		} else if Tool == "ookla-http" {
+			cmd = exec.Command("tools/ookla-http/speedtest.py", "--version")
 		} else {
 			return ConfigEval{
 				Label:  "tool",

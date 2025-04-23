@@ -32,6 +32,15 @@ type MeasureOokla struct {
 	Upload     float64 `json:"speedtest_ookla_upload"`
 }
 
+type MeasureOoklaHttp struct {
+	Download   float64 `json:"speedtest_ookla_download"`
+	Latency    float64 `json:"speedtest_ookla_latency"`
+	ServerHost string  `json:"speedtest_ookla_server_host"`
+	ServerId   string     `json:"speedtest_ookla_server_id"`
+	ServerName string  `json:"speedtest_ookla_server_name"`
+	Upload     float64 `json:"speedtest_ookla_upload"`
+}
+
 type MeasureIperf struct {
 	Download float64 `json:"speedtest_iperf_download"`
 	Upload   float64 `json:"speedtest_iperf_upload"`
@@ -51,6 +60,7 @@ type RttSample struct {
 type Measurements struct {
 	Ndt7          *MeasureNdt   `json:"ndt7,omitempty"`
 	Ookla         *MeasureOokla `json:"ookla,omitempty"`
+	OoklaHttp     *MeasureOoklaHttp `json:"ooklahttp,omitempty"`
 	Iperf         *MeasureIperf `json:"iperf,omitempty"`
 	RttSamples    []RttSample   `json:"rtt_samples"`
 	BytesConsumed int64         `json:"test_bytes_consumed"`
@@ -77,6 +87,7 @@ type Metadata struct {
 var (
 	MNdt   MeasureNdt
 	MOokla MeasureOokla
+	MOoklaHttp MeasureOoklaHttp
 	MIperf MeasureIperf
 
 	MSamples       = make(map[int]RttSample)
@@ -113,7 +124,9 @@ func Collect() {
 		MetaD.Measurements.Ndt7 = &MNdt
 	} else if config.Tool == "ookla" {	
 		MetaD.Measurements.Ookla = &MOokla
-	} else if config.Tool == "iperf" {
+	} else if config.Tool == "ookla-http" {	
+		MetaD.Measurements.OoklaHttp = &MOoklaHttp
+	}else if config.Tool == "iperf" {
 		MetaD.Measurements.Iperf = &MIperf
 	}
 
