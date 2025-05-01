@@ -33,13 +33,17 @@ func SpeedtestProcess() {
 		cmd = exec.Command("speedtest", cmdArgs...)
 		logParser = logParserOokla
 	case "ookla-http":
-		cmdArgs := []string{"--json", "--server-ip", config.Server}
-		if config.Server == ""{
-			cmdArgs = append(cmdArgs,"127.0.0.1:80")
+		var cmdArgs []string
+		if config.Server == "" {
+			log.Println("[ookla-http] No server specified, falling back to regular ookla.")
+			cmdArgs = []string{"--accept-license", "-f", "json", "-p", "yes"}
+			cmd = exec.Command("speedtest", cmdArgs...)
+			logParser = logParserOokla
+		} else {
+			cmdArgs = []string{"--json", "--server-ip", config.Server}
+			cmd = exec.Command("tools/ookla-http/speedtest.py", cmdArgs...)
+			logParser = logParserOoklaHttp
 		}
-		cmd = exec.Command("tools/ookla-http/speedtest.py", cmdArgs...)
-		logParser = logParserOoklaHttp
-
 	case "iperf":
 		cmdArgs := []string{"-c", config.Server, "-J"}
 		if config.Server == "" {
